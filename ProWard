@@ -1,0 +1,132 @@
+local storedMousePos = {x = mousePos.x, y = mousePos.y, z = mousePos.z}
+local wardPositionFixed = false
+
+local radianPerStep = (math.pi * 2.0) * 0.05 -- will scan 10 points around a circle
+
+function OnLoad()
+	PrintChat("<font color='#FF3333'>ProWard by Kev v1.1</font>")
+	ProWardMenu = scriptConfig("ProWard", myHero.charName)
+	ProWardMenu:addParam("drawCircle", "Draw Debug Circle Around Mouse", SCRIPT_PARAM_ONOFF, false)
+	ProWardMenu:addParam("radiusToScanAt", "Max Range to Scan for Brush",  SCRIPT_PARAM_SLICE, 150, 50, 250, 0)
+end
+
+function OnDraw()
+	if ProWardMenu.drawCircle then
+		local cursorPos = GetCursorPos()
+		local green = 0xFF00FF00
+		local red = 0xFFFF0000
+		local color
+		local oldX = mousePos.x
+		local oldY = mousePos.y
+		local oldZ = mousePos.z
+		if IsWallOfGrass(mousePos) then
+			color = green
+		else
+			color = red
+			storedMousePos = {x = mousePos.x, y = mousePos.y, z = mousePos.z}
+			local fixed = FixPosition(mousePos)
+		end
+		--DrawText("X = " .. string.format("%.2f", mousePos.x),16, cursorPos.x, cursorPos.y + 50, color)
+		--DrawText("Y = " .. string.format("%.2f", mousePos.y),16, cursorPos.x, cursorPos.y + 65, color)
+		--DrawText("Z = " .. string.format("%.2f", mousePos.z),16, cursorPos.x, cursorPos.y + 80, color)
+	
+		DrawCircle(oldX, oldY, oldZ, ProWardMenu.radiusToScanAt, color)
+		DrawCircle(mousePos.x, mousePos.y, mousePos.z, 25, green)
+	end
+end
+
+-- I discovered that the mousePos variable does not copy like I thought it would, lua just makes a reference to the variable.
+-- If you're looking through this and think I'm a idiot, then that might be why because I made most of this before testing.
+function FixPosition(currentPos)
+	local bushFound = false
+	local newPos = currentPos
+	local currentStep = 0
+	while (currentStep <= (math.pi * 2.0) and bushFound == false) do
+		newPos.x = (ProWardMenu.radiusToScanAt * math.cos(currentStep)) + storedMousePos.x
+		newPos.z = (ProWardMenu.radiusToScanAt * math.sin(currentStep)) + storedMousePos.z
+		if IsWallOfGrass(newPos) then
+			bushFound = true
+		end
+		currentStep = currentStep + radianPerStep
+	end
+	if bushFound then
+		local percent = 0.10
+		local percentTotal = 0.0
+		mX = (newPos.x - storedMousePos.x)
+		mZ = (newPos.z - storedMousePos.z)
+		currentPos.x = storedMousePos.x
+		currentPos.z = storedMousePos.z
+		while IsWallOfGrass(currentPos) == false and percentTotal < 1.0 do
+			currentPos.x = storedMousePos.x + (mX * percentTotal)
+			currentPos.z = storedMousePos.z + (mZ * percentTotal)
+			percentTotal = percentTotal + percent
+		end
+		-- Add it one more time just to make sure since IsWallOfGrass is iffy.
+		currentPos.x = storedMousePos.x + (mX * percentTotal)
+		currentPos.z = storedMousePos.z + (mZ * percentTotal)
+	else
+		newPos.x = storedMousePos.x
+		newPos.z = storedMousePos.z
+	end
+	return newPos
+end
+
+function CheckWard(itemId)
+	--PrintChat("ItemID: " .. itemId)
+	if itemId == 3340 or itemId == 2049 or itemId == 2043 or itemId == 2044 or itemId == 2045 or itemId == 3361 or itemId == 3362 then
+		return true
+	end
+	return false
+end
+
+function CheckSpellForWard(spellID)
+	--PrintChat("Spell ID: " .. spellID)
+	local ward = false
+	if spellID == 4 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_1))
+	end
+	if spellID == 5 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_2))
+	end
+	if spellID == 6 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_3))
+	end
+	if spellID == 7 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_4))
+	end
+	if spellID == 8 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_5))
+	end
+	if spellID == 9 then
+		ward = CheckWard(myHero:getInventorySlot(ITEM_6))
+	end
+	if spellID == 138 then -- Smartcasted trinkets are also spellid 11, this is the same as the recall ID
+		ward = CheckWard(myHero:getInventorySlot(ITEM_7))
+	end
+	return ward
+end
+
+function OnSendPacket(packetSent)
+    local packet = Packet(packetSent)
+    if packet:get('name') == 'S_CAST' then
+		local spellId = packet:get('spellId')
+		local isWard = CheckSpellForWard(spellId)		
+		if isWard then -- put in all the ward packet id's
+			storedMousePos = {x = mousePos.x, y = mousePos.y, z = mousePos.z}
+			local positionCast = mousePos -- Stupid way to making this variable the same as a position variable.
+			positionCast.x = packet:get('fromX')
+			positionCast.y = myHero.y
+			positionCast.z = packet:get('fromY')
+			if IsWallOfGrass(positionCast)  then
+				--PrintChat("In Bush") -- let it cast.
+			else
+				--PrintChat("Out Of Bush") -- block it and fix the positioning if we can
+				packet:block()
+				local fixed = FixPosition(positionCast)
+				--PrintChat("Sending Packet")
+				Packet('S_CAST', {spellId = packet:get('spellId'), fromX = fixed.x, fromY = fixed.z, toX = fixed.x, toY = fixed.z}):send()
+				--PrintChat("Packet Sent")
+			end
+        end
+    end
+end
