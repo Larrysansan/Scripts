@@ -13,7 +13,6 @@ class "Button" -- {
 		self.alpha = 255
 		self.isToggle = true
 		self.nonToggleState = false
-		--AddDrawCallback(function(), self:Draw() end)
 	end
 	
 	function Button:RemoveToggle(durationDown)
