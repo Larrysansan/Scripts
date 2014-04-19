@@ -1,8 +1,3 @@
-
-
-
-
-
 class "Button" -- {
 	function Button:__init(sprite, spriteTwo, spritePosX, spritePosY, spriteWidth, spriteHeight)		
 		self.spriteOne = sprite
