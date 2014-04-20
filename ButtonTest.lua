@@ -5,11 +5,11 @@ function OnLoad()
 	TestButton = Button(GetSprite("buttonUp.dds"), GetSprite("buttonDown.dds"), 100, 100, 200, 100)
 	TestButton:SetAlpha(220)
 	TestButton2 = Button(GetSprite("circleUp.dds"), GetSprite("circleDown.dds"), 200, 200, 20, 20)
-	TestButton2:Make3D(3046.87, -188.57, 4297.29)
-	TestButton2:RemoveToggle(0.100)
-	TestButton2:SetAlpha(200)
-	TestButton2:AddFunction(MessageMe)
-	--TestButton2:RemoveToggle(0.100)
+	TestButton2:Make3D(3046.87, -188.57, 4297.29) -- Give it coords on the map
+	TestButton2:RemoveToggle(0.100) -- Remove the On/Off portion
+	TestButton2:SetAlpha(200) -- Set an alpha layer
+	TestButton2:AddFunction(MessageMe) -- Add a function to be called on push.
+	
 	shiftDown = false
 end
 
@@ -25,6 +25,8 @@ end
 function MessageMe()
 	PrintChat("Button has been pressed")
 end
+
+
 
 function OnWndMsg(msg, key)
 	if msg == 256 then -- ShiftDown
