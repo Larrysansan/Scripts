@@ -1,3 +1,4 @@
+-- Button Class by Kev
 class "Button" -- {
 	function Button:__init(sprite, spriteTwo, spritePosX, spritePosY, spriteWidth, spriteHeight)		
 		self.spriteOne = sprite
@@ -13,6 +14,15 @@ class "Button" -- {
 		self.alpha = 255
 		self.isToggle = true
 		self.nonToggleState = false
+		
+		self.is3D = false
+		self.s3DX = 0
+		self.s3DY = 0
+		self.s3DZ = 0
+		
+		self.hasFunction = false
+		
+		AddDrawCallback(function() self:Draw() end)
 	end
 	
 	function Button:RemoveToggle(durationDown)
@@ -20,7 +30,33 @@ class "Button" -- {
 		self.spriteAltTime = durationDown
 	end
 	
+	function Button:Make3D(worldX, worldY, worldZ)
+		self.is3D = true
+		self.s3DX = worldX
+		self.s3DY = worldY
+		self.s3DZ = worldZ
+	end
+	
+	function Button:AddFunction(functionIn)
+		if self.isToggle then
+			PrintChat("Attempting to use toggle button with a function call, not supporting at the moment.")
+		else
+			self.buttonFunction = functionIn
+			self.hasFunction = true
+		end
+	end
+	
 	function Button:Draw()
+		if self.is3D then
+			local screenPos = WorldToScreen(D3DXVECTOR3(self.s3DX, self.s3DY, self.s3DZ))
+			if screenPos.z < 1 then
+				return
+			else
+				self.spriteX = screenPos.x
+				self.spriteY = screenPos.y
+			end
+		end
+	
 		if self.spriteDrawAlt and self.drawButton then
 			if self.isToggle then
 				self.spriteAlt:Draw(self.spriteX, self.spriteY, self.alpha)
@@ -48,6 +84,9 @@ class "Button" -- {
 				self.spriteDrawAlt = true
 				if self.isToggle == false then
 					self.spriteAltStart = os.clock()
+					if self.hasFunction then
+						self.buttonFunction()
+					end
 				end
 			end
 		end
