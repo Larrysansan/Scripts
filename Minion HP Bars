@@ -38,6 +38,7 @@ function DrawRectangleAL(x, y, w, h, color) -- thanks to honda7's protracker scr
 end
 
 function OutLineBar(x, y, color)
+	--y = y - 3
 	DrawRectangleAL(x, y - 3, 64, 1, color) -- Top
 	DrawRectangleAL(x, y + 2, 64, 1, color) -- Bottom
 	
@@ -46,6 +47,7 @@ function OutLineBar(x, y, color)
 end
 
 function OutLineBarLarge(x, y, color)
+	--y = y - 3
 	DrawRectangleAL(x, y - 3, 125, 1, color) -- Top
 	DrawRectangleAL(x, y + 2, 125, 1, color) -- Bottom
 	
@@ -56,6 +58,7 @@ end
 function drawDetails(minion, lineColor, killColor, smiteColor, isJungle)
 	if minion.charName == "TestCubeRender" or minion.charName == "TT_Buffplat_R" or minion.charName == "TT_Buffplat_L" then return end
 	local barPos = GetUnitHPBarPos(minion)
+	barPos.y = barPos.y - 3
 	local myDamageToMinion = 0
 	
 	-- Calculate the damage we deal to a minion
@@ -210,7 +213,7 @@ function OnDraw()
 	local colorKill = ARGB(Menu.Color.killColor[1], Menu.Color.killColor[2],Menu.Color.killColor[3],Menu.Color.killColor[4])
 	local colorSmite = ARGB(Menu.Color.smiteColor[1], Menu.Color.smiteColor[2],Menu.Color.smiteColor[3],Menu.Color.smiteColor[4])
 	if Menu.Drawing.drawMinions == true then
-		local enemyMinions = minionManager(MINION_ENEMY, 2000, myHero, MINION_SORT_HEALTH_ASC).objects
+		local enemyMinions = minionManager(MINION_ENEMY, 4000, myHero, MINION_SORT_HEALTH_ASC).objects
 		for i,minion in pairs(enemyMinions) do
 			drawDetails(minion, color, colorKill, colorSmite, false)
 		end
@@ -219,7 +222,7 @@ function OnDraw()
 		if Menu.Drawing.drawSmite == true then
 			smiteDamage = math.max(20 * myHero.level + 370, 30 * myHero.level + 330, 40 * myHero.level + 240, 50 * myHero.level + 100)
 		end
-		local jungleMinions = minionManager(MINION_JUNGLE, 2000, myHero, MINION_SORT_HEALTH_ASC).objects
+		local jungleMinions = minionManager(MINION_JUNGLE, 10000, myHero, MINION_SORT_HEALTH_ASC).objects
 		for i,creep in pairs(jungleMinions) do
 			drawDetails(creep, color, colorKill, colorSmite, true)
 		end
